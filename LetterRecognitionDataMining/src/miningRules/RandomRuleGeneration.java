@@ -1,38 +1,63 @@
 package miningRules;
 
-import java.util.Random;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class RandomRuleGeneration implements RuleGenerator {
 
-	private final int RULE_LENGTH = Rule.RULE_LENGTH;
-	private final String CATEGORIES = Rule.CATEGORIES;
-	
-	private final int UPPER_BOUND = Rule.WINDOW_UPPER_BOUND + 2;
-	
-	private final int WILD_CARD = Rule.WILD_CARD;
-	
-	private Random random = new Random();
-
 	@Override
-	public Rule generateRule() {
+	public Rule generateRule(String category) {
 		Rule rule = new Rule();
 
 		for (int i = 0; i < RULE_LENGTH; i++) {
-			int ruleVal = random.nextInt(UPPER_BOUND);
-			if (ruleVal > UPPER_BOUND - 2)
-				rule.setRuleValue(i, WILD_CARD);
+			int ruleVal = random.nextInt(UPPER_BOUND + 1);
+			rule.setRuleValue(i, ruleVal);
+
+			int weightVal = random.nextInt(UPPER_BOUND + 2);
+			
+			if (weightVal > UPPER_BOUND - 2)
+				rule.setRuleWeight(i, WILD_CARD);
 			else
-				rule.setRuleValue(i, ruleVal);
+				rule.setRuleWeight(i, weightVal);
 		}
-		
-		int category = random.nextInt(CATEGORIES.length());
-		
-		if (category == CATEGORIES.length() - 1)
-			rule.setRuleCategory(CATEGORIES.substring(category));
-		else
-			rule.setRuleCategory(CATEGORIES.substring(category, category+1));
-		
+
+		rule.setRuleCategory(category);
+
 		return rule;
 	}
 
+	public static void main(String[] args) {
+		RuleGenerator generator = new RandomRuleGeneration();
+
+		File output = new File(
+				"F:\\Data Mining\\LetterRecognitionDataMining\\resources\\RandomRules.txt");
+		FileWriter fw = null;
+		try {
+			fw = new FileWriter(output);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		for (int i = 0; i < generator.CATEGORIES.length(); i++) {
+			for (int j = 0; j < 150; j++) {
+				String out;
+				if (i == generator.CATEGORIES.length() - 1)
+					out = generator.generateRule(CATEGORIES.substring(i))
+							.toString();
+				else
+					out = generator
+							.generateRule(CATEGORIES.substring(i, i + 1))
+							.toString();
+
+				try {
+					fw.write(out + "\n");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }

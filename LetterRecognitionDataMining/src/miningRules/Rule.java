@@ -5,11 +5,13 @@ public class Rule {
 	public static final int RULE_LENGTH = 16;
 	public static final String CATEGORIES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-	public static final int WINDOW_UPPER_BOUND = 15;
-	public static final int WINDOW_LOWER_BOUND = 0;
+	public static final int WEIGHT_UPPER_BOUND = RULE_LENGTH - 1;
+	public static final int WEIGHT_LOWER_BOUND = 0;
 	public static final int WILD_CARD = 255;
 
-	private int[] rule = new int[16];
+	private int[] rule = new int[RULE_LENGTH];
+	
+	private int[] ruleWeight = new int[RULE_LENGTH];
 
 	private String category = "";
 
@@ -22,19 +24,33 @@ public class Rule {
 		return specificity;
 	}
 
-	public String getCategory() {
+	public String getRuleCategory() {
 		return category;
+	}
+	
+	public int[] getRule() {
+		return rule;
 	}
 
 	public boolean setRuleValue(int ruleIndex, int ruleValue) {
-		if (ruleValue == WILD_CARD) {
-			rule[ruleIndex] = ruleValue;
-			return true;
-		} else if (ruleValue < WINDOW_LOWER_BOUND
-				|| ruleValue > WINDOW_UPPER_BOUND)
+			if (ruleValue < WEIGHT_LOWER_BOUND
+				|| ruleValue > WEIGHT_UPPER_BOUND)
 			return false;
 		else {
 			rule[ruleIndex] = ruleValue;
+			return true;
+		}
+	}
+	
+	public boolean setRuleWeight(int weightIndex, int weightValue) {
+		if (weightValue == WILD_CARD) {
+			ruleWeight[weightIndex] = weightValue;
+			return true;
+		} else if (weightValue < WEIGHT_LOWER_BOUND
+				|| weightValue > WEIGHT_UPPER_BOUND)
+			return false;
+		else {
+			ruleWeight[weightIndex] = weightValue;
 			return true;
 		}
 	}
@@ -51,11 +67,28 @@ public class Rule {
 	public String toString() {
 		
 		String output = "";
-		for (int val : rule)
-			output += "" + val + ",";
+		for (int i = 0; i < rule.length; i++)
+			output += "" + rule[i] + ":" + ruleWeight[i] + ",";
 		
 		output += category;
 		
 		return output;
+	}
+	
+	public boolean compare(Data data) {
+		
+		int[] ruleData = data.getData();
+		
+		for (int i = 0; i < RULE_LENGTH; i++) {
+			if (ruleWeight[i] == WILD_CARD)
+				continue;
+			else if (ruleData[i] > rule[i] + ruleWeight[i] || ruleData[i] < rule[i] - ruleWeight[i])
+				return false;	
+		}
+		
+		if (!data.getDataCategory().equals(category))
+			return false;
+		
+		return true;
 	}
 }
