@@ -25,7 +25,7 @@ public class Bidder implements Comparable<Bidder> {
 	}
 	
 	public boolean checkBid(Data data) {
-		return rule.compare(data);
+		return rule.getRuleCategory().equals(data.getDataCategory());
 	}
 
 	@Override

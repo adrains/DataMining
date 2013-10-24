@@ -2,13 +2,12 @@ package dataMiningModule;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import miningRules.Data;
 import miningRules.Rule;
@@ -19,13 +18,13 @@ public class AuctionHouse {
 
 	private ArrayList<Bidder> bidders = new ArrayList<>();
 
-	private int initialBidAmount = 4000;
-	
-	private Logger logger = Logger.getLogger("AuctionHouse");
-	
+	private int initialBidAmount = 5000;
+
+	private PrintWriter logger;
+
 	{
 		try {
-			logger.addHandler(new FileHandler("BidOutput.txt"));
+			logger = new PrintWriter(new File(resourcePath + "BidOutput.log"));
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -43,10 +42,18 @@ public class AuctionHouse {
 		if (bidders.size() < 1)
 			return;
 
+		ArrayList<Bidder> brokeBidders = new ArrayList<Bidder>();
+
 		for (Bidder bidder : bidders) {
+			if (bidder.getBid() < 1)
+				brokeBidders.add(bidder);
+		}
+
+		for (Bidder bidder : brokeBidders) {
 			if (bidder.getBid() < 1)
 				bidders.remove(bidder);
 		}
+
 	}
 
 	public void bidOn(Data data) {
@@ -55,17 +62,27 @@ public class AuctionHouse {
 		Collections.sort(bidders);
 		Bidder winningBid = bidders.get(0);
 
-		if (winningBid.checkBid(data) && winningBid.getBid() != bidders.get(1).getBid()) {
+		String logOutput = "";
+
+		if (bidders.size() > 1) {
+			if (winningBid.getBid() == bidders.get(1).getBid()) {
+				winningBid = null;
+			}
+		}
+
+		if (winningBid != null && winningBid.checkBid(data)) {
 			winningBid.setBid(winningBid.getBid() + initialBidAmount);
-			logger.log(Level.INFO, String.format("Winning Bid\nWinner: %s\nData: %s\n", winningBid,data));
+			logOutput = String.format("Winning Bid\nWinner: %s\nData: %s\n",
+					winningBid, data);
 		} else {
 			int correctBids = 0;
 			for (Bidder bidder : bidders) {
+				
 				if (bidder.checkBid(data)) {
 					correctBids++;
 				}
 			}
-			logger.log(Level.INFO, String.format("Split bids\n%s Winners\n",correctBids));
+			logOutput = String.format("Split bids\n%s Winners\n", correctBids);
 			for (Bidder bidder : bidders) {
 				if (bidder.checkBid(data)) {
 					bidder.setBid(bidder.getBid() + initialBidAmount
@@ -73,6 +90,9 @@ public class AuctionHouse {
 				}
 			}
 		}
+
+		logger.write(logOutput);
+		logger.flush();
 	}
 
 	private void taxBids() {

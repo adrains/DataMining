@@ -33,10 +33,7 @@ public class Data {
 		output += category;		
 		
 		for (int i = 0; i < data.length; i++)
-			output += "," + data[i];
-		
-		output += category;
-		
+			output += "," + data[i];		
 		return output;
 	}
 }
