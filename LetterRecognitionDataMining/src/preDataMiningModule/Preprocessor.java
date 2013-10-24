@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Preprocessor {
-	static String filepath = "C:\\Users\\Adam Rains\\Documents\\University\\2013\\CP3300\\";
-	static String filename = "letter-recognition.txt";
+	static String filepath = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
+	static String filename = "letter-recognition.data";
 	
 	static ArrayList<ArrayList<String>> characterData;
 	static int LINE_LENGTH = 17;
