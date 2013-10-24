@@ -41,7 +41,7 @@ public class RandomRuleGeneration implements RuleGenerator {
 		}
 
 		for (int i = 0; i < generator.CATEGORIES.length(); i++) {
-			for (int j = 0; j < 150; j++) {
+			for (int j = 0; j < 300; j++) {
 				String out;
 				if (i == generator.CATEGORIES.length() - 1)
 					out = generator.generateRule(CATEGORIES.substring(i))

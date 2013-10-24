@@ -9,8 +9,13 @@ public class Data {
 	
 	public Data(String rawData) {
 		
+		String[] splitData = rawData.split(",");
 		
+		category = splitData[0];
 		
+		for (int i = 0; i < RULE_LENGTH; i++) {
+			data[i] = Integer.parseInt(splitData[i+1]);
+		}	
 	}
 	
 	public String getDataCategory() {
@@ -19,5 +24,19 @@ public class Data {
 	
 	public int[] getData() {
 		return data;
+	}
+	
+	@Override
+	public String toString() {
+		
+		String output = "";
+		output += category;		
+		
+		for (int i = 0; i < data.length; i++)
+			output += "," + data[i];
+		
+		output += category;
+		
+		return output;
 	}
 }

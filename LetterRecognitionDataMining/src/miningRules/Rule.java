@@ -15,6 +15,26 @@ public class Rule {
 
 	private String category = "";
 
+	public Rule() {	
+	}
+	
+	public Rule(String rawData) {	
+		String[] splitData = rawData.split(",");
+		
+		category = splitData[0];
+		
+		int debug;
+		
+		if (splitData.length < RULE_LENGTH+1)
+			debug = 0;
+		
+		for (int i = 0; i < RULE_LENGTH; i++) {
+			String[] ruleSplit = splitData[i+1].split(":");
+			rule[i] = Integer.parseInt(ruleSplit[0]);
+			ruleWeight[i] = Integer.parseInt(ruleSplit[1]);	
+		}	
+	}
+	
 	public int getSpecificity() {
 		int specificity = 0;
 		for (int x : rule) {
@@ -67,10 +87,10 @@ public class Rule {
 	public String toString() {
 		
 		String output = "";
-		for (int i = 0; i < rule.length; i++)
-			output += "" + rule[i] + ":" + ruleWeight[i] + ",";
+		output += category;		
 		
-		output += category;
+		for (int i = 0; i < rule.length; i++)
+			output += "," + rule[i] + ":" + ruleWeight[i];
 		
 		return output;
 	}
