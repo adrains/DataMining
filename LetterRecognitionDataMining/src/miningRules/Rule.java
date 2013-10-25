@@ -88,7 +88,7 @@ public class Rule {
 		return output;
 	}
 
-	public boolean compare(Data data) {
+	public boolean compareRule(Data data) {
 
 		int[] ruleData = data.getData();
 
@@ -99,9 +99,6 @@ public class Rule {
 					|| ruleData[i] < rule[i] - fuzziness)
 				return false;
 		}
-
-		if (!data.getDataCategory().equals(category))
-			return false;
 
 		return true;
 	}

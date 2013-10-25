@@ -4,47 +4,88 @@ import miningRules.Data;
 import miningRules.Rule;
 
 public class Bidder implements Comparable<Bidder> {
-	private int currentBidValue = 8000;
-	
+	private int strength = 8000;
+
 	private Rule rule;
-	
+
 	public Bidder(Rule rule) {
 		this.rule = rule;
 	}
-	
+
 	public Rule getRule() {
 		return rule;
 	}
-	
+
+	/**
+	 * Returns the current bid of the Bidder. Calculation varies depending on
+	 * bidding method.
+	 * 
+	 * @return The current bid value of the Bidder
+	 */
 	public int getBid() {
-		return currentBidValue;
+		return strength;
 	}
 
-	public void setBid(int value) {
-		currentBidValue = value;
+	/**
+	 * Sets the strength value of the Bidder.
+	 * 
+	 * @param value
+	 *            New strength value
+	 */
+	public void setStrength(int value) {
+		strength = value;
 	}
-	
+
+	/**
+	 * Returns the current strength of the bidder.
+	 * 
+	 * @return The current strength value of the bidder
+	 */
 	public int getStrength() {
-		return currentBidValue;
-	}
-	
-	public boolean checkBid(Data data) {
-		return rule.compare(data);
+		return strength;
 	}
 
+	/**
+	 * Checks the Bidder's rule to see if it matches the provided data.
+	 * 
+	 * @param data
+	 *            Data to be checked against
+	 * @return A boolean representing whether or not the rule matches the
+	 *         provided data
+	 */
+	public boolean isValidBidder(Data data) {
+		return rule.compareRule(data);
+	}
+
+	/**
+	 * Checks the data to see if the rule's category matches that of the
+	 * data/training set.
+	 * 
+	 * @param data
+	 *            Data to be checked against
+	 * @return A boolean representing whether or not the rule category and data
+	 *         category match
+	 */
+	public boolean isCorrectBid(Data data) {
+		return rule.getRuleCategory().equals(data.getDataCategory());
+	}
+
+	/**
+	 * Compares to bidders strengths to determine which is higher.
+	 */
 	@Override
 	public int compareTo(Bidder o) {
-		if (o.getBid() > currentBidValue)
+		if (o.getBid() > getBid())
 			return -1;
-		else if (o.getBid() < currentBidValue)
+		else if (o.getBid() < getBid())
 			return 1;
 		else
 			return 0;
 	}
-	
+
 	@Override
 	public String toString() {
-		return String.format("Bid: %s\tRule: %s",currentBidValue,rule);
+		return String.format("Bid: %s\tRule: %s", strength, rule);
 	}
 
 }

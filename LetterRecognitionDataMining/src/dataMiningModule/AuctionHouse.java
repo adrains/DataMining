@@ -9,13 +9,17 @@ import java.util.Collections;
 import java.util.Scanner;
 
 import miningRules.Data;
+import miningRules.RandomRuleGenerator;
 import miningRules.Rule;
+import miningRules.RuleGenerator;
 
 public class AuctionHouse {
 
 	private static String resourcePath = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
 
-	public ArrayList<Bidder> bidders = new ArrayList<>();
+	public ArrayList<Bidder> allBidders = new ArrayList<>();
+
+	private ArrayList<Bidder> currentBidders = new ArrayList<Bidder>();
 
 	private int initialBidAmount = 5000;
 
@@ -33,83 +37,134 @@ public class AuctionHouse {
 		}
 	}
 
+	/**
+	 * Adds a Bidder to the AuctionHouse's bidder list.
+	 * 
+	 * @param bidder
+	 *            The Bidder to be added to the AH list
+	 */
 	public void addBidder(Bidder bidder) {
-		bidders.add(bidder);
+		allBidders.add(bidder);
 	}
 
-	public void assessBidders() {
-		if (bidders.size() < 1)
+	/**
+	 * Check every bidder to see if any have fallen below the performance
+	 * threshold. If a bidder has fallen below, it is removed and a new bidder
+	 * generated in its place.
+	 */
+	private void assessAllBidders() {
+		if (allBidders.size() < 1)
 			return;
 
 		ArrayList<Bidder> brokeBidders = new ArrayList<Bidder>();
 
-		for (Bidder bidder : bidders) {
-			if (bidder.getBid() < 1)
+		for (Bidder bidder : allBidders) {
+			if (bidder.getStrength() <= 1)
 				brokeBidders.add(bidder);
 		}
 
+		RuleGenerator generator = new RandomRuleGenerator();
+
 		for (Bidder bidder : brokeBidders) {
-			if (bidder.getBid() < 1)
-				bidders.remove(bidder);
+			allBidders.remove(bidder);
+			allBidders.add(new Bidder(generator.generateRule(bidder.getRule()
+					.getRuleCategory())));
 		}
 
 	}
 
-	public void bidOn(Data data) {
-		taxBids();
+	/**
+	 * Determines the subsection of bidders that have rules matching the
+	 * presented data.
+	 * 
+	 * @param data
+	 *            The piece of data being checked
+	 * @return An ArrayList of Bidders who have eligible classifiers
+	 */
+	private ArrayList<Bidder> getEligibleBidders(Data data) {
+		ArrayList<Bidder> eligibleBidders = new ArrayList<Bidder>();
 
-		Collections.sort(bidders);
-		Collections.reverse(bidders);
-		
-		Bidder winningBid = bidders.get(0);
+		// Check every bidder present to see if it is eligible to bid on the
+		// data
+		for (Bidder bidder : allBidders) {
+			if (bidder.isValidBidder(data))
+				eligibleBidders.add(bidder);
+		}
+		return eligibleBidders;
+	}
+
+	public void bidOn(Data data) {
+		currentBidders = getEligibleBidders(data);
+
+		logger.write(String.format("%s eligible bidders\n",
+				currentBidders.size()));
+		logger.flush();
+
+		if (currentBidders.size() < 1) {
+			return;
+		}
+
+		Collections.sort(currentBidders);
+		Collections.reverse(currentBidders);
+
+		Bidder winningBid = currentBidders.get(0);
 
 		String logOutput = "";
 
-		if (bidders.size() > 1) {
-			if (winningBid.getBid() == bidders.get(1).getBid()) {
+		if (currentBidders.size() > 1) {
+			if (winningBid.getBid() == currentBidders.get(1).getBid()) {
 				winningBid = null;
 			}
 		}
 
-		if (winningBid != null && winningBid.checkBid(data)) {
-			winningBid.setBid(winningBid.getBid() + initialBidAmount);
+		if (winningBid != null && winningBid.isCorrectBid(data)) {
+			winningBid.setStrength(winningBid.getStrength() + initialBidAmount
+					* 2);
 			logOutput = String.format("Winning Bid\nWinner: %s\nData: %s\n",
 					winningBid, data);
 		} else {
 			int correctBids = 0;
-			for (Bidder bidder : bidders) {
+			for (Bidder bidder : currentBidders) {
 
-				if (bidder.checkBid(data)) {
+				if (bidder.isCorrectBid(data)) {
 					correctBids++;
 				}
 			}
 
 			logOutput = String.format("Split bids\n%s Winners\n", correctBids);
 
-			for (Bidder bidder : bidders) {
-				if (bidder.checkBid(data)) {
-					bidder.setBid(bidder.getStrength() + initialBidAmount
-							/ correctBids);
+			if (correctBids != 0) {
+				for (Bidder bidder : currentBidders) {
+					if (bidder.isCorrectBid(data)) {
+						bidder.setStrength(bidder.getStrength()
+								+ initialBidAmount * 2 / correctBids);
+					}
 				}
 			}
 		}
 
 		logger.write(logOutput);
 		logger.flush();
+
+		taxAllBidders();
 	}
 
-	private void taxBids() {
-		for (Bidder bidder : bidders) {
-			bidder.setBid((int) (bidder.getStrength() * 0.9));
+	/**
+	 * Deducts a fixed amount from each bidders strength. Is used as a form of
+	 * depreciation on all bidders to remove any bidder that isn't making bids.
+	 */
+	private void taxAllBidders() {
+		for (Bidder bidder : allBidders) {
+			bidder.setStrength((int) (bidder.getStrength() - 1));
 		}
-
-		assessBidders();
+		assessAllBidders();
 	}
 
 	public static void main(String[] args) {
 		Scanner scanner = null;
 		try {
-			scanner = new Scanner(new File(resourcePath + "Rules\\A.rules"));
+			scanner = new Scanner(new File(resourcePath
+					+ "Rules\\randomRules.rules"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -123,7 +178,8 @@ public class AuctionHouse {
 
 		for (int i = 0; i < 10; i++) {
 			try {
-				scanner = new Scanner(new File(resourcePath + "Data\\A.data"));
+				scanner = new Scanner(new File(resourcePath
+						+ "Data\\letter-recognition.data"));
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -133,9 +189,9 @@ public class AuctionHouse {
 				AH.bidOn(new Data(scanner.next()));
 			}
 
-			System.out.println(AH.bidders.size());
+			System.out.println(AH.allBidders.size());
 		}
-		for (Bidder bidder : AH.bidders) {
+		for (Bidder bidder : AH.allBidders) {
 			AH.logger.write(bidder.toString() + "\n");
 			AH.logger.flush();
 		}

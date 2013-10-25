@@ -30,6 +30,14 @@ public class RandomRuleGenerator implements RuleGenerator {
 		RuleGenerator generator = new RandomRuleGenerator();
 
 		String outputFile = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\Rules\\";
+		
+		FileWriter fw = null;
+		try {
+			fw = new FileWriter(outputFile + "randomRules.rules");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		for (int i = 0; i < generator.CATEGORIES.length(); i++) {
 			String category;
@@ -39,15 +47,7 @@ public class RandomRuleGenerator implements RuleGenerator {
 			else
 				category = CATEGORIES.substring(i, i + 1);
 
-			FileWriter fw = null;
-			try {
-				fw = new FileWriter(outputFile + category + ".rules");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			for (int j = 0; j < 50000; j++) {
+			for (int j = 0; j < 300; j++) {
 				String out = generator.generateRule(category).toString();
 
 				try {
