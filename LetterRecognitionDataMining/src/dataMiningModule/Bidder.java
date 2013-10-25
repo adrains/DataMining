@@ -4,7 +4,7 @@ import miningRules.Data;
 import miningRules.Rule;
 
 public class Bidder implements Comparable<Bidder> {
-	private int currentBidValue = 5000;
+	private int currentBidValue = 8000;
 	
 	private Rule rule;
 	
@@ -24,8 +24,12 @@ public class Bidder implements Comparable<Bidder> {
 		currentBidValue = value;
 	}
 	
+	public int getStrength() {
+		return currentBidValue;
+	}
+	
 	public boolean checkBid(Data data) {
-		return rule.getRuleCategory().equals(data.getDataCategory());
+		return rule.compare(data);
 	}
 
 	@Override

@@ -2,7 +2,6 @@ package dataMiningModule;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -16,11 +15,11 @@ public class AuctionHouse {
 
 	private static String resourcePath = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
 
-	private ArrayList<Bidder> bidders = new ArrayList<>();
+	public ArrayList<Bidder> bidders = new ArrayList<>();
 
 	private int initialBidAmount = 5000;
 
-	private PrintWriter logger;
+	public PrintWriter logger;
 
 	{
 		try {
@@ -60,6 +59,8 @@ public class AuctionHouse {
 		taxBids();
 
 		Collections.sort(bidders);
+		Collections.reverse(bidders);
+		
 		Bidder winningBid = bidders.get(0);
 
 		String logOutput = "";
@@ -77,15 +78,17 @@ public class AuctionHouse {
 		} else {
 			int correctBids = 0;
 			for (Bidder bidder : bidders) {
-				
+
 				if (bidder.checkBid(data)) {
 					correctBids++;
 				}
 			}
+
 			logOutput = String.format("Split bids\n%s Winners\n", correctBids);
+
 			for (Bidder bidder : bidders) {
 				if (bidder.checkBid(data)) {
-					bidder.setBid(bidder.getBid() + initialBidAmount
+					bidder.setBid(bidder.getStrength() + initialBidAmount
 							/ correctBids);
 				}
 			}
@@ -97,7 +100,7 @@ public class AuctionHouse {
 
 	private void taxBids() {
 		for (Bidder bidder : bidders) {
-			bidder.setBid((int) (bidder.getBid() * 0.9));
+			bidder.setBid((int) (bidder.getStrength() * 0.9));
 		}
 
 		assessBidders();
@@ -106,7 +109,7 @@ public class AuctionHouse {
 	public static void main(String[] args) {
 		Scanner scanner = null;
 		try {
-			scanner = new Scanner(new File(resourcePath + "RandomRules.txt"));
+			scanner = new Scanner(new File(resourcePath + "Rules\\A.rules"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -118,16 +121,23 @@ public class AuctionHouse {
 			AH.addBidder(new Bidder(new Rule(scanner.next())));
 		}
 
-		try {
-			scanner = new Scanner(new File(resourcePath
-					+ "letter-recognition.data"));
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		for (int i = 0; i < 10; i++) {
+			try {
+				scanner = new Scanner(new File(resourcePath + "Data\\A.data"));
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
-		while (scanner.hasNext()) {
-			AH.bidOn(new Data(scanner.next()));
+			while (scanner.hasNext()) {
+				AH.bidOn(new Data(scanner.next()));
+			}
+
+			System.out.println(AH.bidders.size());
+		}
+		for (Bidder bidder : AH.bidders) {
+			AH.logger.write(bidder.toString() + "\n");
+			AH.logger.flush();
 		}
 	}
 }
