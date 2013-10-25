@@ -146,6 +146,7 @@ public class AuctionHouse {
 		logger.write(logOutput);
 		logger.flush();
 
+		taxSpecificBidders(currentBidders);
 		taxAllBidders();
 	}
 
@@ -158,6 +159,21 @@ public class AuctionHouse {
 			bidder.setStrength((int) (bidder.getStrength() - 1));
 		}
 		assessAllBidders();
+	}
+
+	private void taxSpecificBidders(ArrayList<Bidder> bidders) {
+		for (Bidder bidder : bidders) {
+			switch (bidder.getBidType()) {
+			case SPECIFICITY:
+				bidder.setStrength((int) (bidder.getStrength() - bidder
+						.getBid() * 0.015));
+			case STRENGTH:
+			default:
+				bidder.setStrength((int) (bidder.getStrength() - bidder
+						.getBid() * 0.1));
+
+			}
+		}
 	}
 
 	public static void main(String[] args) {
@@ -176,7 +192,7 @@ public class AuctionHouse {
 			AH.addBidder(new Bidder(new Rule(scanner.next())));
 		}
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 100; i++) {
 			try {
 				scanner = new Scanner(new File(resourcePath
 						+ "Data\\letter-recognition.data"));
@@ -191,9 +207,26 @@ public class AuctionHouse {
 
 			System.out.println(AH.allBidders.size());
 		}
+
+		Collections.sort(AH.allBidders);
+		Collections.reverse(AH.allBidders);
+
+		PrintWriter out = null;
+		try {
+			out = new PrintWriter(new File(resourcePath + "BidOutput.results"));
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		int outputCount = 0;
+
 		for (Bidder bidder : AH.allBidders) {
-			AH.logger.write(bidder.toString() + "\n");
-			AH.logger.flush();
+			out.write(bidder.toString() + "\n");
+			out.flush();
 		}
 	}
 }

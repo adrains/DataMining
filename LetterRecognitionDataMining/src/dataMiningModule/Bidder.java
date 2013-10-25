@@ -4,18 +4,35 @@ import miningRules.Data;
 import miningRules.Rule;
 
 public class Bidder implements Comparable<Bidder> {
+
+	public enum BidType {
+		STRENGTH, SPECIFICITY
+	}
+
 	private int strength = 8000;
 
 	private Rule rule;
 
+	private BidType bidType;
+
 	public Bidder(Rule rule) {
 		this.rule = rule;
+		this.bidType = BidType.STRENGTH;
+	}
+	
+	public Bidder(Rule rule, BidType bidType) {
+		this.rule = rule;
+		this.bidType = bidType;
 	}
 
 	public Rule getRule() {
 		return rule;
 	}
 
+	public BidType getBidType() {
+		return bidType;
+	}
+	
 	/**
 	 * Returns the current bid of the Bidder. Calculation varies depending on
 	 * bidding method.
@@ -23,7 +40,13 @@ public class Bidder implements Comparable<Bidder> {
 	 * @return The current bid value of the Bidder
 	 */
 	public int getBid() {
-		return strength;
+		switch (bidType) {
+		case SPECIFICITY:
+			return strength * rule.getSpecificity();
+		case STRENGTH:
+		default:
+			return strength;
+		}
 	}
 
 	/**

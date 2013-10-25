@@ -1,12 +1,12 @@
 package miningRules;
 
-public class Rule {
+public class Rule implements Cloneable {
 
 	public static final int RULE_LENGTH = 16;
 	public static final String CATEGORIES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-	public static final int WEIGHT_UPPER_BOUND = RULE_LENGTH - 1;
-	public static final int WEIGHT_LOWER_BOUND = 0;
+	public static final int UPPER_BOUND = 15;
+	public static final int LOWER_BOUND = 0;
 	public static final int WILD_CARD = 255;
 
 	private int[] rule = new int[RULE_LENGTH];
@@ -55,8 +55,8 @@ public class Rule {
 		if (ruleValue == WILD_CARD) {
 			rule[ruleIndex] = ruleValue;
 			return true;
-		} else if (ruleValue < WEIGHT_LOWER_BOUND
-				|| ruleValue > WEIGHT_UPPER_BOUND)
+		} else if (ruleValue < LOWER_BOUND
+				|| ruleValue > UPPER_BOUND)
 			return false;
 		else {
 			rule[ruleIndex] = ruleValue;
