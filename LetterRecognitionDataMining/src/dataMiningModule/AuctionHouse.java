@@ -9,9 +9,8 @@ import java.util.Collections;
 import java.util.Scanner;
 
 import miningRules.Data;
-import miningRules.RandomRuleGenerator;
+import miningRules.HybridRuleGenerator;
 import miningRules.Rule;
-import miningRules.RuleGenerator;
 
 public class AuctionHouse {
 
@@ -21,7 +20,7 @@ public class AuctionHouse {
 
 	private ArrayList<Bidder> currentBidders = new ArrayList<Bidder>();
 
-	private int initialBidAmount = 5000;
+	private int initialBidAmount = 500;
 
 	public PrintWriter logger;
 
@@ -63,12 +62,27 @@ public class AuctionHouse {
 				brokeBidders.add(bidder);
 		}
 
-		RuleGenerator generator = new RandomRuleGenerator();
-
 		for (Bidder bidder : brokeBidders) {
 			allBidders.remove(bidder);
-			allBidders.add(new Bidder(generator.generateRule(bidder.getRule()
-					.getRuleCategory())));
+
+			Collections.sort(allBidders);
+			Collections.reverse(allBidders);
+
+			int i = 0;
+
+			while (!allBidders.get(i).getRule().getRuleCategory()
+					.equals(bidder.getRule().getRuleCategory()))
+				i++;
+
+			Rule highestRule = null;
+			
+			if (allBidders.get(i).getBid() >= initialBidAmount)
+				highestRule = allBidders.get(i).getRule();
+
+			allBidders.add(new Bidder(
+					HybridRuleGenerator.generateRule(bidder.getRule()
+							.getRuleCategory(), bidder.getRule(), highestRule),
+					initialBidAmount, bidder.getBidType()));
 		}
 
 	}
@@ -179,8 +193,7 @@ public class AuctionHouse {
 	public static void main(String[] args) {
 		Scanner scanner = null;
 		try {
-			scanner = new Scanner(new File(resourcePath
-					+ "Rules\\randomRules.rules"));
+			scanner = new Scanner(new File(resourcePath + "RandomRules.rules"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -189,10 +202,11 @@ public class AuctionHouse {
 		AuctionHouse AH = new AuctionHouse();
 
 		while (scanner.hasNext()) {
-			AH.addBidder(new Bidder(new Rule(scanner.next())));
+			AH.addBidder(new Bidder(new Rule(scanner.next()),
+					AH.initialBidAmount));
 		}
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 50; i++) {
 			try {
 				scanner = new Scanner(new File(resourcePath
 						+ "Data\\letter-recognition.data"));
@@ -211,9 +225,11 @@ public class AuctionHouse {
 		Collections.sort(AH.allBidders);
 		Collections.reverse(AH.allBidders);
 
-		PrintWriter out = null;
+		PrintWriter bidOut = null;
+		PrintWriter ruleOut = null;
 		try {
-			out = new PrintWriter(new File(resourcePath + "BidOutput.results"));
+			bidOut = new PrintWriter(new File(resourcePath + "BidOutput.results"));
+			ruleOut = new PrintWriter(new File(resourcePath + "ruleOutput.results"));
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -225,8 +241,12 @@ public class AuctionHouse {
 		int outputCount = 0;
 
 		for (Bidder bidder : AH.allBidders) {
-			out.write(bidder.toString() + "\n");
-			out.flush();
+			bidOut.write(bidder.toString() + "\n");
+			bidOut.flush();
+			ruleOut.write(bidder.getRule().toString() + "\n");
+			ruleOut.flush();
 		}
+		
+		
 	}
 }

@@ -5,10 +5,7 @@ import java.io.IOException;
 
 public class RandomRuleGenerator implements RuleGenerator {
 	
-	private final int FUZZINESS = 5;
-
-	@Override
-	public Rule generateRule(String category) {
+	public static Rule generateRule(String category) {
 		Rule rule = new Rule();
 
 		for (int i = 0; i < RULE_LENGTH; i++) {
@@ -27,28 +24,26 @@ public class RandomRuleGenerator implements RuleGenerator {
 	}
 
 	public static void main(String[] args) {
-		RuleGenerator generator = new RandomRuleGenerator();
-
-		String outputFile = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\Rules\\";
+		String outputFile = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
 		
 		FileWriter fw = null;
 		try {
-			fw = new FileWriter(outputFile + "randomRules.rules");
+			fw = new FileWriter(outputFile + "RandomRules.rules");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		for (int i = 0; i < generator.CATEGORIES.length(); i++) {
+		for (int i = 0; i < RandomRuleGenerator.CATEGORIES.length(); i++) {
 			String category;
 
-			if (i == generator.CATEGORIES.length() - 1)
+			if (i == RandomRuleGenerator.CATEGORIES.length() - 1)
 				category = CATEGORIES.substring(i);
 			else
 				category = CATEGORIES.substring(i, i + 1);
 
-			for (int j = 0; j < 100; j++) {
-				String out = generator.generateRule(category).toString();
+			for (int j = 0; j < 150; j++) {
+				String out = RandomRuleGenerator.generateRule(category).toString();
 
 				try {
 					fw.write(out + "\n");

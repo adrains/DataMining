@@ -9,19 +9,19 @@ public class Bidder implements Comparable<Bidder> {
 		STRENGTH, SPECIFICITY
 	}
 
-	private int strength = 8000;
-
+	private int strength;
 	private Rule rule;
-
 	private BidType bidType;
 
-	public Bidder(Rule rule) {
+	public Bidder(Rule rule, int initialStrength) {
 		this.rule = rule;
+		this.strength = initialStrength;
 		this.bidType = BidType.STRENGTH;
 	}
 	
-	public Bidder(Rule rule, BidType bidType) {
+	public Bidder(Rule rule, int initialStrength, BidType bidType) {
 		this.rule = rule;
+		this.strength = initialStrength;
 		this.bidType = bidType;
 	}
 
