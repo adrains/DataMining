@@ -1,12 +1,15 @@
 package dataMiningModule;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Scanner;
 
 import miningRules.Data;
+import miningRules.ExemplarRuleGenerator;
 import miningRules.HybridRuleGenerator;
 import miningRules.Rule;
 
@@ -16,20 +19,29 @@ public class TrainingModule {
 		WINNER_TAKES_ALL, SHARED
 	}
 
-	private static String resourcePath = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
+	public enum RuleType {
+		EXEMPLAR, HYBRID, VERIFICATION
+	}
 
-	private ArrayList<Bidder> allBidders = new ArrayList<>();
+	private static final String RESOURCE_PATH = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
+	private static final String TRAINING_DATA = RESOURCE_PATH
+			+ "Data\\training.data";
+
+	private ArrayList<Bidder> allBidders = new ArrayList<Bidder>();
 	private ArrayList<Bidder> currentBidders = new ArrayList<Bidder>();
 
-	private int initialBidAmount = 500;
+	private int initialBidAmount = 1000;
+
+	private final int NUMBER_OF_ITERATIONS = 5;
 
 	private AuctionType currentAuction = AuctionType.SHARED;
+	private RuleType currentRuleType = RuleType.HYBRID;
 
 	private PrintWriter logger;
 
 	{
 		try {
-			logger = new PrintWriter(new File(resourcePath
+			logger = new PrintWriter(new File(RESOURCE_PATH
 					+ "trainingOutput.log"));
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
@@ -61,6 +73,16 @@ public class TrainingModule {
 	}
 
 	/**
+	 * Sets the current rule type.
+	 * 
+	 * @param auctionType
+	 *            The new rule type to be used
+	 */
+	public void setRuleType(RuleType ruleType) {
+		this.currentRuleType = ruleType;
+	}
+
+	/**
 	 * Check every bidder to see if any have fallen below the performance
 	 * threshold. If a bidder has fallen below, it is removed and a new bidder
 	 * generated in its place.
@@ -82,48 +104,73 @@ public class TrainingModule {
 
 		for (Bidder bidder : brokeBidders) {
 			allBidders.remove(bidder);
+			switch (currentRuleType) {
+			case EXEMPLAR:
+			case VERIFICATION:
+				break;
+			case HYBRID:
+			default:
+				int i = 0;
 
-			int i = 0;
+				// Get the current highest bidder
+				Bidder highBidder = allBidders.get(i);
 
-			// Get the current highest bidder
-			Bidder highBidder = allBidders.get(i);
+				// Get the broke bidders rule
+				Rule brokeBidderRule = bidder.getRule();
 
-			// Get the broke bidders rule
-			Rule brokeBidderRule = bidder.getRule();
+				// Get the high bidders rule
+				Rule highBidderRule = highBidder.getRule();
 
-			// Get the high bidders rule
-			Rule highBidderRule = highBidder.getRule();
+				// Loop through all the bidders in descending order until a
+				// bidder
+				// with a matching category is found
+				while (!highBidderRule.getRuleCategory().equals(
+						brokeBidderRule.getRuleCategory())) {
+					highBidder = allBidders.get(++i);
+					highBidderRule = highBidder.getRule();
+				}
 
-			// Loop through all the bidders in descending order until a bidder
-			// with a matching category is found
-			while (!highBidderRule.getRuleCategory().equals(
-					brokeBidderRule.getRuleCategory())) {
-				highBidder = allBidders.get(++i);
-				highBidderRule = highBidder.getRule();
+				// Do the same for the second highest bidder
+
+				// Get the current highest bidder
+				Bidder secondHighBidder = allBidders.get(i);
+
+				// Get the high bidders rule
+				Rule secondHighBidderRule = highBidder.getRule();
+
+				// Loop through all the bidders in descending order until a
+				// bidder
+				// with a matching category is found
+				while (!secondHighBidderRule.getRuleCategory().equals(
+						brokeBidderRule.getRuleCategory())) {
+					secondHighBidder = allBidders.get(++i);
+					secondHighBidderRule = secondHighBidder.getRule();
+				}
+
+				// If the highest bidder found has a strength lower than the
+				// "threshold" disregard
+				if (secondHighBidder.getBid() <= initialBidAmount)
+					secondHighBidderRule = null;
+
+				// Get parameters from existing and highest bidder
+				String category = bidder.getRule().getRuleCategory();
+				Rule parent1 = highBidderRule;
+				Rule parent2 = secondHighBidderRule;
+
+				// Create a new rule using aforementioned parameters
+				Rule newRule = HybridRuleGenerator.generateRule(category,
+						parent1, parent2);
+
+				// Create a new bidder using the new rule. Retains old bidders
+				// BidType
+				Bidder replacement = new Bidder(newRule, initialBidAmount,
+						bidder.getBidType());
+
+				// Place the replacement bidder back into the pool
+				allBidders.add(replacement);
 			}
-
-			// If the highest bidder found has a strength lower than the
-			// "threshold" disregard
-			if (highBidder.getBid() <= initialBidAmount)
-				highBidderRule = null;
-
-			// Get parameters from existing and highest bidder
-			String category = bidder.getRule().getRuleCategory();
-			Rule parent1 = bidder.getRule();
-			Rule parent2 = highBidderRule;
-
-			// Create a new rule using aforementioned parameters
-			Rule newRule = HybridRuleGenerator.generateRule(category, parent1,
-					parent2);
-
-			// Create a new bidder using the new rule. Retains old bidders
-			// BidType
-			Bidder replacement = new Bidder(newRule, initialBidAmount,
-					bidder.getBidType());
-
-			// Place the replacement bidder back into the pool
-			allBidders.add(replacement);
 		}
+
 	}
 
 	/**
@@ -146,7 +193,32 @@ public class TrainingModule {
 		return eligibleBidders;
 	}
 
-	public void bidOn(Data data) {
+	private void bidOn(Data data) {
+		ArrayList<Bidder> winningBids = determineWinningBids(data);
+
+		if (currentRuleType == RuleType.EXEMPLAR) {
+			// If none of the winners advocated the correct category, generate
+			// new rules.
+			if (winningBids.size() < 1) {
+				Rule[] newRules = ExemplarRuleGenerator.generateRule(data);
+				for (Rule rule : newRules) {
+					allBidders.add(new Bidder(rule, initialBidAmount));
+				}
+				return;
+			}
+		}
+
+		payWinners(winningBids);
+
+		taxSpecificBidders(currentBidders);
+		taxAllBidders();
+	}
+
+	private ArrayList<Bidder> determineWinningBids(Data data) {
+		// An ArrayList for the winning bids, the winning criterion determined
+		// by the auction type
+		ArrayList<Bidder> winningBids = new ArrayList<Bidder>();
+
 		currentBidders = getEligibleBidders(data);
 
 		// TODO: Remove log line
@@ -154,20 +226,30 @@ public class TrainingModule {
 				currentBidders.size()));
 		logger.flush();
 
+		// If there are no eligible bidders, act based on the current rule type.
 		if (currentBidders.size() < 1) {
-			return;
+			switch (currentRuleType) {
+			case EXEMPLAR:
+				// If Exemplar, generate new rules
+				Rule[] newRules = ExemplarRuleGenerator.generateRule(data);
+				for (Rule rule : newRules) {
+					allBidders.add(new Bidder(rule, initialBidAmount));
+				}
+				break;
+
+			case HYBRID:
+			case VERIFICATION:
+				// If hybrid or otherwise, tax all the bidders
+			default:
+				taxAllBidders();
+			}
+			
+			return winningBids;
 		}
 
 		// Sort the eligible bidders into descending order
 		Collections.sort(currentBidders);
 		Collections.reverse(currentBidders);
-
-		// TODO: Remove log line
-		String logOutput = "";
-
-		// An ArrayList for the winning bids, the winning criterion determined
-		// by the auction type
-		ArrayList<Bidder> winningBids = new ArrayList<Bidder>();
 
 		switch (currentAuction) {
 		case WINNER_TAKES_ALL:
@@ -191,9 +273,10 @@ public class TrainingModule {
 					}
 
 					// TODO: Remove log line
-					logOutput = String.format(
+					logger.write(String.format(
 							"Winner-Takes-All\nsShared max bid: %s\n",
-							winningBids.size());
+							winningBids.size()));
+					logger.flush();
 
 				} else {
 					// Otherwise check that the winning bidder made a correct
@@ -203,9 +286,10 @@ public class TrainingModule {
 					}
 
 					// TODO: Remove log line
-					logOutput = String.format(
+					logger.write(String.format(
 							"Winner-Takes-All\nSingle Bid, was correct: %s\n",
-							winningBidder.isCorrectBid(data));
+							winningBidder.isCorrectBid(data)));
+					logger.flush();
 				}
 			} else {
 				// Winning bidder is the only bidder
@@ -217,9 +301,10 @@ public class TrainingModule {
 				}
 
 				// TODO: Remove log line
-				logOutput = String
+				logger.write(String
 						.format("Winner-Takes-All\nOne eligible bidder, was correct: %s\n",
-								winningBidder.isCorrectBid(data));
+								winningBidder.isCorrectBid(data)));
+				logger.flush();
 			}
 			break;
 		case SHARED:
@@ -229,23 +314,22 @@ public class TrainingModule {
 			}
 
 			// TODO: Remove log line
-			logOutput = String.format("Reward Sharing\n%s correct bidders\n",
-					winningBids.size());
+			logger.write(String.format("Reward Sharing\n%s correct bidders\n",
+					winningBids.size()));
+			logger.flush();
 		default:
 
 		}
-
+		
+		return winningBids;
+	}
+	
+	private void payWinners(ArrayList<Bidder> winningBids) {
 		// Award each of the winning bidders their portion of the pot
 		for (Bidder bidder : winningBids) {
 			bidder.setStrength(bidder.getStrength() + initialBidAmount * 2
 					/ winningBids.size());
 		}
-
-		logger.write(logOutput);
-		logger.flush();
-
-		taxSpecificBidders(currentBidders);
-		taxAllBidders();
 	}
 
 	/**
@@ -280,4 +364,116 @@ public class TrainingModule {
 			}
 		}
 	}
+
+	private void loadBidders(String rulePath) {
+		Scanner scanner = null;
+		try {
+			scanner = new Scanner(new File(rulePath));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		while (scanner.hasNext()) {
+			addBidder(new Bidder(new Rule(scanner.next()), initialBidAmount));
+		}
+
+		scanner.close();
+	}
+	
+	public void hybridTraining() {
+		allBidders = new ArrayList<Bidder>();
+		
+		currentRuleType = RuleType.HYBRID;
+
+		String resultsPath = "F:\\Mining Results\\Hybrid\\";
+
+		loadBidders(RESOURCE_PATH + "RandomRules.rules");
+		
+		defaultTraining(resultsPath);
+	}
+
+	public void exemplarTraining() {
+		allBidders = new ArrayList<Bidder>();
+
+		currentRuleType = RuleType.EXEMPLAR;
+
+		String resultsPath = "F:\\Mining Results\\Exemplar\\";
+		
+		defaultTraining(resultsPath);		
+	}
+
+	public void verificationStage() {
+		allBidders = new ArrayList<Bidder>();
+		
+		currentRuleType = RuleType.VERIFICATION;
+		
+		String resultsPath = "F:\\Mining Results\\Verification\\";
+		
+		defaultTraining(resultsPath);	
+	}
+
+	private void defaultTraining(String outputPath) {
+		PrintWriter bidOut = null;
+		PrintWriter ruleOut = null;
+		
+		int iterationCounter = 0;
+		int outputCount = 0;
+
+		Scanner scanner = null;
+
+		while (true) {
+			try {
+				scanner = new Scanner(new File(TRAINING_DATA));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+
+			while (scanner.hasNext()) {
+				bidOn(new Data(scanner.next()));
+			}
+
+			if (iterationCounter++ % NUMBER_OF_ITERATIONS == 0) {
+				try {
+					bidOut = new PrintWriter(new File(String.format(
+							"%sBids\\BidOutput%s.results", outputPath,
+							outputCount)));
+					ruleOut = new PrintWriter(new File(String.format(
+							"%sRules\\RuleOutput%s.results", outputPath,
+							outputCount++)));
+				} catch (SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				// Sort the all bidders into descending order
+				Collections.sort(allBidders);
+				Collections.reverse(allBidders);
+
+				for (Bidder bidder : allBidders) {
+					bidOut.write(bidder.toString() + "\n");
+					bidOut.flush();
+					ruleOut.write(bidder.getRule().toString() + "\n");
+					ruleOut.flush();
+				}
+
+				bidOut.close();
+				ruleOut.close();
+			}
+
+			if (outputCount > 5)
+				break;
+		}
+
+	}
+	public static void main(String[] args) {
+		TrainingModule training = new TrainingModule();
+
+		training.hybridTraining();
+
+		training.exemplarTraining();
+	}
+
 }

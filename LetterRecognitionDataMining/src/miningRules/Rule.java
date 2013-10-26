@@ -12,7 +12,7 @@ public class Rule implements Cloneable {
 	private int[] rule = new int[RULE_LENGTH];
 
 	private String category = "";
-	private int fuzziness = 0;
+	private int fuzziness = RuleGenerator.FUZZINESS;
 
 	public Rule() {
 	}
@@ -30,7 +30,6 @@ public class Rule implements Cloneable {
 		for (int i = 0; i < RULE_LENGTH; i++) {
 			String[] ruleSplit = splitData[i + 1].split(":");
 			rule[i] = Integer.parseInt(ruleSplit[0]);
-			fuzziness = Integer.parseInt(ruleSplit[1]);
 		}
 	}
 
