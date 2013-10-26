@@ -193,6 +193,10 @@ public class TrainingModule {
 		return eligibleBidders;
 	}
 
+	/**
+	 * 
+	 * @param data
+	 */
 	private void bidOn(Data data) {
 		ArrayList<Bidder> winningBids = determineWinningBids(data);
 
@@ -214,6 +218,11 @@ public class TrainingModule {
 		taxAllBidders();
 	}
 
+	/**
+	 * 
+	 * @param data
+	 * @return
+	 */
 	private ArrayList<Bidder> determineWinningBids(Data data) {
 		// An ArrayList for the winning bids, the winning criterion determined
 		// by the auction type
@@ -243,7 +252,7 @@ public class TrainingModule {
 			default:
 				taxAllBidders();
 			}
-			
+
 			return winningBids;
 		}
 
@@ -320,10 +329,19 @@ public class TrainingModule {
 		default:
 
 		}
-		
+
 		return winningBids;
 	}
-	
+
+	/**
+	 * Loops through the list of bidders and pays them according to the payout
+	 * scheme.
+	 * 
+	 * Currently: Bidder.strength + 2 * initialBidAmount / number of winners
+	 * 
+	 * @param winningBids
+	 *            An ArrayList contain all the bidders to be paid
+	 */
 	private void payWinners(ArrayList<Bidder> winningBids) {
 		// Award each of the winning bidders their portion of the pot
 		for (Bidder bidder : winningBids) {
@@ -365,6 +383,13 @@ public class TrainingModule {
 		}
 	}
 
+	/**
+	 * Loads bidders into the system from the specified file containing a list
+	 * of rules.
+	 * 
+	 * @param rulePath
+	 *            The file path of the rules to be loaded
+	 */
 	private void loadBidders(String rulePath) {
 		Scanner scanner = null;
 		try {
@@ -379,43 +404,64 @@ public class TrainingModule {
 
 		scanner.close();
 	}
-	
+
+	/**
+	 * Sets up all the necessary elements to perform hybrid rule creation using
+	 * the training set of data.
+	 */
 	public void hybridTraining() {
 		allBidders = new ArrayList<Bidder>();
-		
+
 		currentRuleType = RuleType.HYBRID;
 
 		String resultsPath = "F:\\Mining Results\\Hybrid\\";
 
 		loadBidders(RESOURCE_PATH + "RandomRules.rules");
-		
+
 		defaultTraining(resultsPath);
 	}
 
+	/**
+	 * Sets up all the necessary elements to perform exemplar rule creation
+	 * using the training set of data.
+	 */
 	public void exemplarTraining() {
 		allBidders = new ArrayList<Bidder>();
 
 		currentRuleType = RuleType.EXEMPLAR;
 
 		String resultsPath = "F:\\Mining Results\\Exemplar\\";
-		
-		defaultTraining(resultsPath);		
+
+		defaultTraining(resultsPath);
 	}
 
+	/**
+	 * Sets up all the necessary elements to perform rule verification using the
+	 * training set of data.
+	 */
 	public void verificationStage() {
 		allBidders = new ArrayList<Bidder>();
-		
+
 		currentRuleType = RuleType.VERIFICATION;
-		
+
 		String resultsPath = "F:\\Mining Results\\Verification\\";
-		
-		defaultTraining(resultsPath);	
+
+		loadBidders(resultsPath + "Hybrid.results");
+
+		defaultTraining(resultsPath);
 	}
 
+	/**
+	 * Default training method. Performs rule generation/mutation dependent on
+	 * the rule type being employed.
+	 * 
+	 * @param outputPath
+	 *            The file path of the output files.
+	 */
 	private void defaultTraining(String outputPath) {
 		PrintWriter bidOut = null;
 		PrintWriter ruleOut = null;
-		
+
 		int iterationCounter = 0;
 		int outputCount = 0;
 
@@ -468,12 +514,15 @@ public class TrainingModule {
 		}
 
 	}
+
 	public static void main(String[] args) {
 		TrainingModule training = new TrainingModule();
 
-		training.hybridTraining();
+		// training.hybridTraining();
 
-		training.exemplarTraining();
+		// training.exemplarTraining();
+
+		training.verificationStage();
 	}
 
 }
