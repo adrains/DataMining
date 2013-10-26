@@ -1,19 +1,25 @@
 package preDataMiningModule;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 public class Preprocessor {
-	static String filepath = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
-	static String filename = "letter-recognition.data";
+	static String FILEPATH = "C:\\Users\\Adam Rains\\DataMining\\DataMining\\LetterRecognitionDataMining\\resources\\";
+	static String FILENAME = "letter-recognition.data";
 	
 	static ArrayList<ArrayList<String>> characterData;
 	static int LINE_LENGTH = 17;
 	static int ATTRIBUTE_LOW = 0;
 	static int ATTRIBUTE_HIGH = 15;
+	static String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	
+	static PrintWriter logger;
 	
 	/**
 	 * ========================================================================
@@ -21,7 +27,19 @@ public class Preprocessor {
 	 * 
 	 * @return The cleaned character data array with invalid entries removed
 	 */
+	@SuppressWarnings("resource")
 	public static ArrayList<ArrayList<String>> preprocessData(){
+		//Create logger
+			try {
+				logger = new PrintWriter(new File(FILEPATH + "Preprocessing.log"));
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
 		//Import data
 		characterData = readFile();
 		
@@ -31,8 +49,15 @@ public class Preprocessor {
 		//Ensure attribute list only contains numbers and they are within the correct range
 		checkAttributes();
 		
+		//Print cleaning results
+		logger.println("Total entries remaining after cleaning: " + characterData.size());
+		logger.flush();
+		
+		//Split data into 26 files, one for each letter
+		splitByLetter();
+		
 		//Data has been cleaned, return
-		System.out.println("Total entries remaining after cleaning: " + characterData.size());
+
 		return characterData;
 	}
 	
@@ -49,7 +74,7 @@ public class Preprocessor {
 		ArrayList<ArrayList<String>> characterDataArray = new ArrayList<ArrayList<String>>();
 		
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(filepath + filename));
+			BufferedReader reader = new BufferedReader(new FileReader(FILEPATH + FILENAME));
 			
 			//Read each line, separate at commas and store
 			String line = null;
@@ -81,7 +106,8 @@ public class Preprocessor {
 		}
 		
 		//Give information about array
-		System.out.println("Number of character entries: " + characterDataArray.size());
+		logger.println("Number of character entries: " + characterDataArray.size());
+		logger.flush();
 		
 		//Return the character data array
 		return characterDataArray;
@@ -115,7 +141,8 @@ public class Preprocessor {
 		
 		//All lines complete, display results
 		finalLineCount = characterData.size();
-		System.out.println("Lines with letters: " + finalLineCount + "/" + startingLineCount);
+		logger.println("Lines with letters: " + finalLineCount + "/" + startingLineCount);
+		logger.flush();
 	}
 
 	/**
@@ -174,7 +201,94 @@ public class Preprocessor {
 		
 		//All lines complete, display results
 		finalLineCount = characterData.size();
-		System.out.println("Lines with correct number of integer attributes within bounds: " + finalLineCount + "/" + startingLineCount);
+		logger.println("Lines with correct number of integer attributes within bounds: " + finalLineCount + "/" + startingLineCount);
+		logger.flush();
+	}
+
+	/**
+	 * ========================================================================
+	 * splitByLetter Method
+	 * 
+	 * Saves each line to one of 26 different files depending on which letter it represents.
+	 */
+	private static void splitByLetter(){
+		String currentLetter;
+		int totalLetters = LETTERS.length();
+		int totalLinesForLetter = 0;
+		ArrayList<ArrayList<String>> letterLineArray = new ArrayList<ArrayList<String>>();
+		
+		logger.println("Total instances per letter: ");
+		logger.flush();
+		
+		//For each letter in the list of letters, loop
+		for (int letterCount = 0; letterCount < totalLetters; letterCount++){
+			//Get the current letter
+			currentLetter = LETTERS.substring(letterCount, letterCount + 1);
+			
+			//Loop through line array and add each line representing the current letter to a new array
+			//Once complete, save the created list to a file
+			for (int lineCount = 0; lineCount < characterData.size(); lineCount++){
+				//Check if letter matches
+				if (currentLetter.equals(characterData.get(lineCount).get(0))){
+					//Add line
+					letterLineArray.add(characterData.get(lineCount));
+					
+					//Increment counter (To tell how many instances per letter
+					totalLinesForLetter++;
+				}
+			}
+			
+			//All lines checked, print to file
+			saveToFile(letterLineArray, currentLetter);
+			
+			//Print total instances of character and reset counters
+			logger.println(currentLetter + ": " + totalLinesForLetter);
+			logger.flush();
+			totalLinesForLetter = 0;
+			
+			//Reset array
+			letterLineArray = new ArrayList<ArrayList<String>>();
+		}
+	}
+	
+	/**
+	 * ========================================================================
+	 * saveToFile Method
+	 * 
+	 * Saves each line to one of 26 different files depending on which letter it represents.
+	 * 
+	 * @param lineList The list of lines to print
+	 * @param newFilename The name of the file to be created
+	 */
+	private static void saveToFile(ArrayList<ArrayList<String>> lineList, String newFilename){
+		try {
+			PrintWriter writer = new PrintWriter(FILEPATH + newFilename + ".data", "UTF-8");
+			
+			//Write each line to the file
+			for (int lineCount = 0; lineCount < lineList.size(); lineCount++){
+				for (int attributeCount = 0; attributeCount < LINE_LENGTH; attributeCount++){
+					writer.write(lineList.get(lineCount).get(attributeCount));
+					
+					//If at the last attribute, go to the next line, otherwise add a comma (Don't add new line if at last line)
+					if ((lineCount < lineList.size() - 1) && (attributeCount >= LINE_LENGTH - 1)){
+						writer.println();
+						writer.flush();
+					} else if ((attributeCount < LINE_LENGTH - 1)){
+						writer.write(",");
+						writer.flush();
+					}
+				}
+		}
+			
+			writer.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 }
 
