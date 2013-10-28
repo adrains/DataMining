@@ -122,8 +122,7 @@ public class TrainingModule {
 				Rule highBidderRule = highBidder.getRule();
 
 				// Loop through all the bidders in descending order until a
-				// bidder
-				// with a matching category is found
+				// bidder with a matching category is found
 				while (!highBidderRule.getRuleCategory().equals(
 						brokeBidderRule.getRuleCategory())) {
 					highBidder = allBidders.get(++i);
@@ -133,14 +132,13 @@ public class TrainingModule {
 				// Do the same for the second highest bidder
 
 				// Get the current highest bidder
-				Bidder secondHighBidder = allBidders.get(i);
+				Bidder secondHighBidder = allBidders.get(++i);
 
 				// Get the high bidders rule
 				Rule secondHighBidderRule = highBidder.getRule();
 
 				// Loop through all the bidders in descending order until a
-				// bidder
-				// with a matching category is found
+				// bidder with a matching category is found
 				while (!secondHighBidderRule.getRuleCategory().equals(
 						brokeBidderRule.getRuleCategory())) {
 					secondHighBidder = allBidders.get(++i);
@@ -406,61 +404,34 @@ public class TrainingModule {
 	}
 
 	/**
-	 * Sets up all the necessary elements to perform hybrid rule creation using
-	 * the training set of data.
-	 */
-	public void hybridTraining() {
-		allBidders = new ArrayList<Bidder>();
-
-		currentRuleType = RuleType.HYBRID;
-
-		String resultsPath = "F:\\Mining Results\\Hybrid\\";
-
-		loadBidders(RESOURCE_PATH + "RandomRules.rules");
-
-		defaultTraining(resultsPath);
-	}
-
-	/**
-	 * Sets up all the necessary elements to perform exemplar rule creation
-	 * using the training set of data.
-	 */
-	public void exemplarTraining() {
-		allBidders = new ArrayList<Bidder>();
-
-		currentRuleType = RuleType.EXEMPLAR;
-
-		String resultsPath = "F:\\Mining Results\\Exemplar\\";
-
-		defaultTraining(resultsPath);
-	}
-
-	/**
-	 * Sets up all the necessary elements to perform rule verification using the
-	 * training set of data.
-	 */
-	public void verificationStage() {
-		allBidders = new ArrayList<Bidder>();
-
-		currentRuleType = RuleType.VERIFICATION;
-
-		String resultsPath = "F:\\Mining Results\\Verification\\";
-
-		loadBidders(resultsPath + "Hybrid.results");
-
-		defaultTraining(resultsPath);
-	}
-
-	/**
 	 * Default training method. Performs rule generation/mutation dependent on
 	 * the rule type being employed.
 	 * 
 	 * @param outputPath
 	 *            The file path of the output files.
 	 */
-	private void defaultTraining(String outputPath) {
+	private void training() {
 		PrintWriter bidOut = null;
 		PrintWriter ruleOut = null;
+
+		String resultsPath = "";
+
+		switch (currentRuleType) {
+		case EXEMPLAR:
+			allBidders = new ArrayList<Bidder>();
+			resultsPath = "F:\\Mining Results\\Exemplar\\";
+			break;
+		case VERIFICATION:
+			allBidders = new ArrayList<Bidder>();
+			resultsPath = "F:\\Mining Results\\Verification\\";
+			loadBidders(resultsPath + "Hybrid.results");
+			break;
+		case HYBRID:
+		default:
+			allBidders = new ArrayList<Bidder>();
+			resultsPath = "F:\\Mining Results\\Hybrid\\";
+			loadBidders(RESOURCE_PATH + "RandomRules.rules");
+		}
 
 		int iterationCounter = 0;
 		int outputCount = 0;
@@ -481,10 +452,10 @@ public class TrainingModule {
 			if (iterationCounter++ % NUMBER_OF_ITERATIONS == 0) {
 				try {
 					bidOut = new PrintWriter(new File(String.format(
-							"%sBids\\BidOutput%s.results", outputPath,
+							"%sBids\\BidOutput%s.results", resultsPath,
 							outputCount)));
 					ruleOut = new PrintWriter(new File(String.format(
-							"%sRules\\RuleOutput%s.results", outputPath,
+							"%sRules\\RuleOutput%s.results", resultsPath,
 							outputCount++)));
 				} catch (SecurityException e) {
 					// TODO Auto-generated catch block
@@ -522,7 +493,11 @@ public class TrainingModule {
 
 		// training.exemplarTraining();
 
-		training.verificationStage();
+		training.setRuleType(RuleType.HYBRID);
+		
+		training.training();
+		
+		//training.setRuleType(RuleType.VERIFICATION);	
 	}
 
 }
