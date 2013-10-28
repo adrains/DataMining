@@ -32,7 +32,7 @@ public class TrainingModule {
 
 	private int initialBidAmount = 1000;
 
-	private final int NUMBER_OF_ITERATIONS = 5;
+	private final int NUMBER_OF_ITERATIONS = 50;
 
 	private AuctionType currentAuction = AuctionType.SHARED;
 	private RuleType currentRuleType = RuleType.HYBRID;
@@ -489,15 +489,12 @@ public class TrainingModule {
 	public static void main(String[] args) {
 		TrainingModule training = new TrainingModule();
 
-		// training.hybridTraining();
-
-		// training.exemplarTraining();
-
-		training.setRuleType(RuleType.HYBRID);
+		//training.setRuleType(RuleType.HYBRID);
+		
+		training.setRuleType(RuleType.VERIFICATION);	
 		
 		training.training();
 		
-		//training.setRuleType(RuleType.VERIFICATION);	
 	}
 
 }
