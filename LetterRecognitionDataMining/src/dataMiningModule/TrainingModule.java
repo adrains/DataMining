@@ -32,7 +32,7 @@ public class TrainingModule {
 
 	private int initialBidAmount = 1000;
 
-	private final int NUMBER_OF_ITERATIONS = 50;
+	private final int NUMBER_OF_ITERATIONS = 20;
 
 	private AuctionType currentAuction = AuctionType.SHARED;
 	private RuleType currentRuleType = RuleType.HYBRID;
