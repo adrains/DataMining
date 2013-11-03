@@ -19,7 +19,7 @@ public class Preprocessor {
 	static int ATTRIBUTE_HIGH = 15;
 	static String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	
-	static PrintWriter logger;
+	static PrintWriter logger; 
 	
 	/**
 	 * ========================================================================

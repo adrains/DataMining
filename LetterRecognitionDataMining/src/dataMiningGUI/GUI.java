@@ -27,7 +27,7 @@ public class GUI extends JFrame implements WindowInterface{
 	private JTextField tfPreprocessingDataInput;
 	private JTextField tfPreprocessingSaveLocation;
 	private JTextArea taPreprocessingSummary;
-	private ControllerInterface controller = new Controller();
+	private ControllerInterface controller = new Controller(); 
 	private String dataset;
 	private String saveLocation;
 	private JTextField tfDataMiningTrainingInput;
