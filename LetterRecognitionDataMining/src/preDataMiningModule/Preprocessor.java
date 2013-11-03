@@ -28,10 +28,10 @@ public class Preprocessor {
 	 * @return The cleaned character data array with invalid entries removed
 	 */
 	@SuppressWarnings("resource")
-	public static ArrayList<ArrayList<String>> preprocessData(){
+	public static String preprocessData(String dataset, String filepath){
 		//Create logger
 			try {
-				logger = new PrintWriter(new File(FILEPATH + "Preprocessing.log"));
+				logger = new PrintWriter(new File(filepath + "Preprocessing.log"));
 			} catch (SecurityException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -41,7 +41,7 @@ public class Preprocessor {
 			}
 		
 		//Import data
-		characterData = readFile();
+		characterData = readFile(dataset);
 		
 		//Ensure first character on each line is the letter representing the data
 		checkForLetters();
@@ -54,11 +54,33 @@ public class Preprocessor {
 		logger.flush();
 		
 		//Split data into 26 files, one for each letter
-		splitByLetter();
+		splitByLetter(filepath);
 		
-		//Data has been cleaned, return
-
-		return characterData;
+		//Data has been cleaned, return log
+		BufferedReader reader;
+		String total = "";
+		
+		try {
+			reader = new BufferedReader(new FileReader(filepath + "Preprocessing.log"));
+			
+			//Read each line
+			String line = null;
+			
+			//Read 
+			while ((line = reader.readLine()) != null){
+				
+				total += line + "\n";
+			}
+			reader.close();	
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			
+		}
+		
+		System.out.println(total);
+		return total;
 	}
 	
 	/**
@@ -69,12 +91,12 @@ public class Preprocessor {
 	 * 
 	 * @return An ArrayList format of the raw data separated by line and ,
 	 */
-	private static ArrayList<ArrayList<String>> readFile(){
+	private static ArrayList<ArrayList<String>> readFile(String dataset){
 		//Array to be returned
 		ArrayList<ArrayList<String>> characterDataArray = new ArrayList<ArrayList<String>>();
 		
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(FILEPATH + FILENAME));
+			BufferedReader reader = new BufferedReader(new FileReader(dataset));
 			
 			//Read each line, separate at commas and store
 			String line = null;
@@ -211,7 +233,7 @@ public class Preprocessor {
 	 * 
 	 * Saves each line to one of 26 different files depending on which letter it represents.
 	 */
-	private static void splitByLetter(){
+	private static void splitByLetter(String filepath){
 		String currentLetter;
 		int totalLetters = LETTERS.length();
 		int totalLinesForLetter = 0;
@@ -239,7 +261,7 @@ public class Preprocessor {
 			}
 			
 			//All lines checked, print to file
-			saveToFile(letterLineArray, currentLetter);
+			saveToFile(letterLineArray, currentLetter, filepath);
 			
 			//Print total instances of character and reset counters
 			logger.println(currentLetter + ": " + totalLinesForLetter);
@@ -260,9 +282,9 @@ public class Preprocessor {
 	 * @param lineList The list of lines to print
 	 * @param newFilename The name of the file to be created
 	 */
-	private static void saveToFile(ArrayList<ArrayList<String>> lineList, String newFilename){
+	private static void saveToFile(ArrayList<ArrayList<String>> lineList, String newFilename, String filepath){
 		try {
-			PrintWriter writer = new PrintWriter(FILEPATH + newFilename + ".data", "UTF-8");
+			PrintWriter writer = new PrintWriter(filepath + newFilename + ".data", "UTF-8");
 			
 			//Write each line to the file
 			for (int lineCount = 0; lineCount < lineList.size(); lineCount++){
