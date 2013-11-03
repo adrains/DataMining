@@ -9,9 +9,10 @@ public class RandomRuleGenerator implements RuleGenerator {
 		Rule rule = new Rule();
 
 		for (int i = 0; i < RULE_LENGTH; i++) {
-			int ruleVal = random.nextInt(UPPER_BOUND + 2);
+			int ruleVal = random.nextInt(UPPER_BOUND + 1);
+			double wildCardChance = random.nextDouble();
 			
-			if (ruleVal > UPPER_BOUND)
+			if (wildCardChance <= WILD_CARD_CHANCE)
 				rule.setRuleValue(i, WILD_CARD);
 			else
 				rule.setRuleValue(i, ruleVal);
@@ -42,7 +43,7 @@ public class RandomRuleGenerator implements RuleGenerator {
 			else
 				category = CATEGORIES.substring(i, i + 1);
 
-			for (int j = 0; j < 150; j++) {
+			for (int j = 0; j < 200; j++) {
 				String out = RandomRuleGenerator.generateRule(category).toString();
 
 				try {
