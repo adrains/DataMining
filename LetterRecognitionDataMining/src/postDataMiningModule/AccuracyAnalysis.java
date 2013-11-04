@@ -2,20 +2,19 @@ package postDataMiningModule;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 import miningRules.Data;
 import miningRules.Rule;
 
 public class AccuracyAnalysis {
-	private static final String RESOURCE_PATH = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
-	private static final String DATA = RESOURCE_PATH
-			+ "Data\\letter-recognition.data";
-	
 	// Used to convert characters into array indices
 	private final int MOD_VALUE = 'A';
+	
+	private static String dataPath = "";
 
 	private ArrayList<Rule> ruleSet = new ArrayList<Rule>();
 
@@ -28,7 +27,11 @@ public class AccuracyAnalysis {
 		}
 
 		while (scanner.hasNext()) {
+			try {
 			ruleSet.add(new Rule(scanner.next()));
+			} catch (Exception e){
+				System.out.println(rulePath);
+			}
 		}
 
 		scanner.close();
@@ -56,67 +59,146 @@ public class AccuracyAnalysis {
 	private int findMaxIndex(int[] values) {
 		int maxVal = 0;
 		int maxIndex = 0;
-		
-		for(int i = 0; i < values.length; i++) {
+
+		for (int i = 0; i < values.length; i++) {
 			if (maxVal < values[i]) {
 				maxVal = values[i];
 				maxIndex = i;
 			}
 		}
-		
+
 		return maxIndex;
 	}
-	
+
 	private String findWeightedFavourite(ArrayList<Rule> ruleSubset) {
 		int[] results = new int[26];
-		
+
 		for (Rule rule : ruleSubset) {
-			results[rule.getRuleCategory().charAt(0) % MOD_VALUE] += rule.getSpecificity();
+			results[rule.getRuleCategory().charAt(0) % MOD_VALUE] += rule
+					.getSpecificity();
 		}
-		
+
 		char result = (char) (findMaxIndex(results) + MOD_VALUE);
-		
+
 		return Character.toString(result);
 	}
+
+	private void clearRules() {
+		ruleSet = new ArrayList<Rule>();
+	}
 	
-	public void determineAccuracy(String rulePath) {
+	private String randomGuess() {
+		return Character.toString((char) (new Random().nextInt(26) + MOD_VALUE));
+	}
+	
+	public AccuracyResult determineAccuracy(String rulePath, String dataPath) {
+		clearRules();
+		
+		this.dataPath = dataPath;
 		loadRules(rulePath);
 
 		Scanner scanner = null;
 
 		try {
-			scanner = new Scanner(new File(DATA));
+			scanner = new Scanner(new File(this.dataPath));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		
+
 		int total = 0;
 		int correctClassifications = 0;
-		
-		while(scanner.hasNext()) {
+
+		while (scanner.hasNext()) {
 			ArrayList<Rule> accurateRules = new ArrayList<Rule>();
 			Data data = new Data(scanner.next());
-			
+
 			accurateRules = getEligibleRules(data);
-			
+
 			String favouriteResult = findWeightedFavourite(accurateRules);
-			
+
 			if (favouriteResult.equals(data.getDataCategory()))
 				correctClassifications++;
-			
+
 			total++;
-			double percent = (double) correctClassifications / (double) total * 100.0;
-			
-			
-			System.out.println(String.format("Total classifications: %4d\tCorrect classifications: %4d\tAccuracy: %2.2f", total, correctClassifications, percent));
+
+			// System.out
+			// .println(String
+			// .format("Total classifications: %4d\tCorrect classifications: %4d\tAccuracy: %2.2f",
+			// total, correctClassifications, percent));
 		}
+		
+		AccuracyResult accuracy = new AccuracyResult(correctClassifications, total);
+		
+		scanner.close();
+
+		return accuracy;
+	}
+
+	public double findRandomGuessAccuracy() {
+		Scanner scanner = null;
+
+		try {
+			scanner = new Scanner(new File(this.dataPath));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		int total = 0;
+		int correctClassifications = 0;
+
+		double percent = 0;
+
+		while (scanner.hasNext()) {
+			ArrayList<Rule> accurateRules = new ArrayList<Rule>();
+			Data data = new Data(scanner.next());
+
+			accurateRules = getEligibleRules(data);
+
+			String favouriteResult = randomGuess();
+
+			if (favouriteResult.equals(data.getDataCategory()))
+				correctClassifications++;
+
+			total++;
+			percent = (double) correctClassifications / (double) total * 100.0;
+
+			// System.out
+			// .println(String
+			// .format("Total classifications: %4d\tCorrect classifications: %4d\tAccuracy: %2.2f",
+			// total, correctClassifications, percent));
+		}
+		
+		scanner.close();
+
+		return percent;
 	}
 	
 	public static void main(String[] args) {
-		String rulePath = "F:\\Mining Results\\Verification\\Hybrid.results";
-		
+		String rulePath = "F:\\Mining Results\\Verification\\Results";
+
+		File[] list = new File(rulePath).listFiles();
+
 		AccuracyAnalysis test = new AccuracyAnalysis();
+
+		PrintWriter out = null;
+		try {
+			out = new PrintWriter(new File("F:\\Mining Results\\output.log"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		for (File file : list) {
+			String filePath = rulePath + "\\" + file.getName();
+
+			//double accuracy = test.determineAccuracy(filePath);
+
+			//out.println(String.format("%s\nAccuracy: %2.2f", file.getName(),
+			//		accuracy));
+			out.flush();
+		}
 		
-		test.determineAccuracy(rulePath);
+		out.println(String.format("Random\nAccuracy: %2.2f", test.findRandomGuessAccuracy()));
+		out.flush();
 	}
 }

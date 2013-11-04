@@ -12,6 +12,7 @@ import miningRules.Data;
 import miningRules.ExemplarRuleGenerator;
 import miningRules.HybridRuleGenerator;
 import miningRules.Rule;
+import miningRules.RuleGenerator;
 
 public class TrainingModule {
 
@@ -20,37 +21,35 @@ public class TrainingModule {
 	}
 
 	public enum RuleType {
-		EXEMPLAR, HYBRID, VERIFICATION
+		EXEMPLAR("Exemplar"), HYBRID("Hybrid"), VERIFICATION("Verified");
+
+		private RuleType(final String text) {
+			this.text = text;
+		}
+
+		private final String text;
+
+		@Override
+		public String toString() {
+			return text;
+		}
 	}
 
-	private static final String RESOURCE_PATH = "F:\\Data Mining\\LetterRecognitionDataMining\\resources\\";
-	private static final String TRAINING_DATA = RESOURCE_PATH
-			+ "Data\\training.data";
+	private static String trainingData = "";
+	private static String resultsPath = "";
 
 	private ArrayList<Bidder> allBidders = new ArrayList<Bidder>();
 	private ArrayList<Bidder> currentBidders = new ArrayList<Bidder>();
 
 	private int initialBidAmount = 1000;
 
-	private final int NUMBER_OF_ITERATIONS = 20;
+	private int iterationCount = 10;
+	private int fuzziness = 0;
 
-	private AuctionType currentAuction = AuctionType.SHARED;
+	private AuctionType currentAuction = AuctionType.WINNER_TAKES_ALL;
 	private RuleType currentRuleType = RuleType.HYBRID;
 
-	private PrintWriter logger;
-
-	{
-		try {
-			logger = new PrintWriter(new File(RESOURCE_PATH
-					+ "trainingOutput.log"));
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+	// private PrintWriter //logger;
 
 	/**
 	 * Adds a Bidder to the AuctionHouse's bidder list.
@@ -157,7 +156,7 @@ public class TrainingModule {
 
 				// Create a new rule using aforementioned parameters
 				Rule newRule = HybridRuleGenerator.generateRule(category,
-						parent1, parent2);
+						parent1, parent2, bidder.getRule().getRuleFuzziness());
 
 				// Create a new bidder using the new rule. Retains old bidders
 				// BidType
@@ -229,9 +228,9 @@ public class TrainingModule {
 		currentBidders = getEligibleBidders(data);
 
 		// TODO: Remove log line
-		logger.write(String.format("%s eligible bidders\n",
-				currentBidders.size()));
-		logger.flush();
+		// //logger.write(String.format("%s eligible bidders\n",
+		// currentBidders.size()));
+		// //logger.flush();
 
 		// If there are no eligible bidders, act based on the current rule type.
 		if (currentBidders.size() < 1) {
@@ -246,10 +245,10 @@ public class TrainingModule {
 
 			case HYBRID:
 			case VERIFICATION:
-				// If hybrid or otherwise, tax all the bidders
 			default:
-				taxAllBidders();
 			}
+
+			taxAllBidders();
 
 			return winningBids;
 		}
@@ -280,10 +279,10 @@ public class TrainingModule {
 					}
 
 					// TODO: Remove log line
-					logger.write(String.format(
-							"Winner-Takes-All\nsShared max bid: %s\n",
-							winningBids.size()));
-					logger.flush();
+					// logger.write(String.format(
+					// "Winner-Takes-All\nsShared max bid: %s\n",
+					// winningBids.size()));
+					// logger.flush();
 
 				} else {
 					// Otherwise check that the winning bidder made a correct
@@ -293,10 +292,10 @@ public class TrainingModule {
 					}
 
 					// TODO: Remove log line
-					logger.write(String.format(
-							"Winner-Takes-All\nSingle Bid, was correct: %s\n",
-							winningBidder.isCorrectBid(data)));
-					logger.flush();
+					// logger.write(String.format(
+					// "Winner-Takes-All\nSingle Bid, was correct: %s\n",
+					// winningBidder.isCorrectBid(data)));
+					// logger.flush();
 				}
 			} else {
 				// Winning bidder is the only bidder
@@ -308,10 +307,10 @@ public class TrainingModule {
 				}
 
 				// TODO: Remove log line
-				logger.write(String
-						.format("Winner-Takes-All\nOne eligible bidder, was correct: %s\n",
-								winningBidder.isCorrectBid(data)));
-				logger.flush();
+				// logger.write(String
+				// .format("Winner-Takes-All\nOne eligible bidder, was correct: %s\n",
+				// winningBidder.isCorrectBid(data)));
+				// logger.flush();
 			}
 			break;
 		case SHARED:
@@ -321,9 +320,9 @@ public class TrainingModule {
 			}
 
 			// TODO: Remove log line
-			logger.write(String.format("Reward Sharing\n%s correct bidders\n",
-					winningBids.size()));
-			logger.flush();
+			// logger.write(String.format("Reward Sharing\n%s correct bidders\n",
+			// winningBids.size()));
+			// logger.flush();
 		default:
 
 		}
@@ -410,29 +409,22 @@ public class TrainingModule {
 	 * @param outputPath
 	 *            The file path of the output files.
 	 */
-	private void training() {
+	public void training(ParamObject parameters) {
+
 		PrintWriter bidOut = null;
 		PrintWriter ruleOut = null;
 
-		String resultsPath = "";
+		resultsPath = parameters.getRuleDataFilePath();
+		trainingData = parameters.getTrainingDataFilePath();
 
-		switch (currentRuleType) {
-		case EXEMPLAR:
-			allBidders = new ArrayList<Bidder>();
-			resultsPath = "F:\\Mining Results\\Exemplar\\";
-			break;
-		case VERIFICATION:
-			allBidders = new ArrayList<Bidder>();
-			resultsPath = "F:\\Mining Results\\Verification\\";
-			loadBidders(resultsPath + "Hybrid.results");
-			break;
-		case HYBRID:
-		default:
-			allBidders = new ArrayList<Bidder>();
-			resultsPath = "F:\\Mining Results\\Hybrid\\";
-			loadBidders(RESOURCE_PATH + "RandomRules.rules");
-		}
+		currentRuleType = parameters.getRuleType();
+		currentAuction = parameters.getAuctionType();
 
+		iterationCount = parameters.getNumberOfIteration();
+		fuzziness = parameters.getFuzziness();
+
+		
+		loadBidders(String.format("%sRandomRulesW%s.rules", trainingData, fuzziness));
 		int iterationCounter = 0;
 		int outputCount = 0;
 
@@ -440,7 +432,7 @@ public class TrainingModule {
 
 		while (true) {
 			try {
-				scanner = new Scanner(new File(TRAINING_DATA));
+				scanner = new Scanner(new File(trainingData + "TrainingData.data"));
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -449,13 +441,13 @@ public class TrainingModule {
 				bidOn(new Data(scanner.next()));
 			}
 
-			if (iterationCounter++ % NUMBER_OF_ITERATIONS == 0) {
+			if (iterationCounter++ % iterationCount == 0) {
 				try {
 					bidOut = new PrintWriter(new File(String.format(
-							"%sBids\\BidOutput%s.results", resultsPath,
-							outputCount)));
+							"%sBidOutput%s.results", resultsPath, outputCount)));
 					ruleOut = new PrintWriter(new File(String.format(
-							"%sRules\\RuleOutput%s.results", resultsPath,
+							"%s%sW%sI%s.results", resultsPath,
+							currentRuleType.toString(), fuzziness,
 							outputCount++)));
 				} catch (SecurityException e) {
 					// TODO Auto-generated catch block
@@ -480,7 +472,7 @@ public class TrainingModule {
 				ruleOut.close();
 			}
 
-			if (outputCount > 5)
+			if (outputCount > 1)
 				break;
 		}
 
@@ -489,12 +481,18 @@ public class TrainingModule {
 	public static void main(String[] args) {
 		TrainingModule training = new TrainingModule();
 
-		//training.setRuleType(RuleType.HYBRID);
-		
-		training.setRuleType(RuleType.VERIFICATION);	
-		
-		training.training();
-		
+		// training.setRuleType(RuleType.EXEMPLAR);
+
+		training.setRuleType(RuleType.VERIFICATION);
+
+		long start = System.nanoTime();
+
+		// training.training();
+
+		long end = System.nanoTime() - start;
+
+		System.out.println(String.format("Time: %s ms", end / 1000000));
+
 	}
 
 }

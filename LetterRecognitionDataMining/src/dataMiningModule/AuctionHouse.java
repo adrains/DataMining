@@ -24,18 +24,6 @@ public class AuctionHouse {
 
 	public PrintWriter logger;
 
-	{
-		try {
-			logger = new PrintWriter(new File(resourcePath + "BidOutput.log"));
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
 	/**
 	 * Adds a Bidder to the AuctionHouse's bidder list.
 	 * 
@@ -75,13 +63,13 @@ public class AuctionHouse {
 				i++;
 
 			Rule highestRule = null;
-			
+
 			if (allBidders.get(i).getBid() >= initialBidAmount)
 				highestRule = allBidders.get(i).getRule();
 
-			allBidders.add(new Bidder(
-					HybridRuleGenerator.generateRule(bidder.getRule()
-							.getRuleCategory(), bidder.getRule(), highestRule),
+			allBidders.add(new Bidder(HybridRuleGenerator.generateRule(bidder
+					.getRule().getRuleCategory(), bidder.getRule(),
+					highestRule, bidder.getRule().getRuleFuzziness()),
 					initialBidAmount, bidder.getBidType()));
 		}
 
@@ -110,9 +98,9 @@ public class AuctionHouse {
 	public void bidOn(Data data) {
 		currentBidders = getEligibleBidders(data);
 
-		logger.write(String.format("%s eligible bidders\n",
-				currentBidders.size()));
-		logger.flush();
+		// logger.write(String.format("%s eligible bidders\n",
+		// currentBidders.size()));
+		// logger.flush();
 
 		if (currentBidders.size() < 1) {
 			return;
@@ -157,8 +145,8 @@ public class AuctionHouse {
 			}
 		}
 
-		logger.write(logOutput);
-		logger.flush();
+		// logger.write(logOutput);
+		// logger.flush();
 
 		taxSpecificBidders(currentBidders);
 		taxAllBidders();
@@ -228,8 +216,10 @@ public class AuctionHouse {
 		PrintWriter bidOut = null;
 		PrintWriter ruleOut = null;
 		try {
-			bidOut = new PrintWriter(new File(resourcePath + "BidOutput.results"));
-			ruleOut = new PrintWriter(new File(resourcePath + "ruleOutput.results"));
+			bidOut = new PrintWriter(new File(resourcePath
+					+ "BidOutput.results"));
+			ruleOut = new PrintWriter(new File(resourcePath
+					+ "ruleOutput.results"));
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -246,7 +236,6 @@ public class AuctionHouse {
 			ruleOut.write(bidder.getRule().toString() + "\n");
 			ruleOut.flush();
 		}
-		
-		
+
 	}
 }

@@ -30,6 +30,8 @@ public class Rule implements Cloneable {
 		for (int i = 0; i < RULE_LENGTH; i++) {
 			String[] ruleSplit = splitData[i + 1].split(":");
 			rule[i] = Integer.parseInt(ruleSplit[0]);
+			if (ruleSplit.length == 2)
+				fuzziness = Integer.parseInt(ruleSplit[1]);
 		}
 	}
 
@@ -65,6 +67,10 @@ public class Rule implements Cloneable {
 
 	public void setRuleFuzziness(int fuzziness) {
 		this.fuzziness = fuzziness;
+	}
+	
+	public int getRuleFuzziness() {
+		return fuzziness;
 	}
 
 	public boolean setRuleCategory(String category) {

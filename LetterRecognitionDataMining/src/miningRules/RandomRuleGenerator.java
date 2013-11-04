@@ -5,7 +5,9 @@ import java.io.IOException;
 
 public class RandomRuleGenerator implements RuleGenerator {
 	
-	public static Rule generateRule(String category) {
+	private static final int NUMBER_OF_RULES = 200;
+	
+	public static Rule generateRule(String category, int fuzziness) {
 		Rule rule = new Rule();
 
 		for (int i = 0; i < RULE_LENGTH; i++) {
@@ -18,7 +20,7 @@ public class RandomRuleGenerator implements RuleGenerator {
 				rule.setRuleValue(i, ruleVal);
 		}
 		
-		rule.setRuleFuzziness(FUZZINESS);
+		rule.setRuleFuzziness(fuzziness);
 		rule.setRuleCategory(category);
 
 		return rule;
@@ -29,7 +31,7 @@ public class RandomRuleGenerator implements RuleGenerator {
 		
 		FileWriter fw = null;
 		try {
-			fw = new FileWriter(outputFile + "RandomRules.rules");
+			fw = new FileWriter(String.format("%sRandomRulesW%s.rules", outputFile, FUZZINESS));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -43,8 +45,8 @@ public class RandomRuleGenerator implements RuleGenerator {
 			else
 				category = CATEGORIES.substring(i, i + 1);
 
-			for (int j = 0; j < 200; j++) {
-				String out = RandomRuleGenerator.generateRule(category).toString();
+			for (int j = 0; j < NUMBER_OF_RULES; j++) {
+				String out = RandomRuleGenerator.generateRule(category, FUZZINESS).toString();
 
 				try {
 					fw.write(out + "\n");
